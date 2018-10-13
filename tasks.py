@@ -20,4 +20,4 @@ def deploy(c):
 def ship(c, s3_bucket=None):
     build(c)
     package(c, s3_bucket=s3_bucket)
-    deploy(c, s3_bucket=s3_bucket)
+    deploy(c)

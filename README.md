@@ -1,6 +1,6 @@
 # TDGO
 
-Go library for interacting with the TD Ameritrade API. Includes 
+Go library for interacting with the TD Ameritrade API. Includes service to handle negotiating OAuth tokens.  
 
 Under heavy development as a personal project but free to use if you find it helpful. 
 
@@ -8,6 +8,7 @@ Under heavy development as a personal project but free to use if you find it hel
 
 - `~/.aws/config` && `~/.aws/credentials` populated with your info
 - S3 Bucket for storing lambda code
+- SecureString SSM params with name `accesstoken` and `refreshtoken`. 
 
 ## How To
 

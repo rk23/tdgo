@@ -39,16 +39,20 @@ type server struct {
 }
 
 type jsonres struct {
-	Data   map[string]string `json:"data"`
-	Errors map[string]string `json:"errors"`
+	Data   interface{}         `json:"data"`
+	Errors []map[string]string `json:"errors"`
 }
 
-func jsonhttp(data map[string]string, errors map[string]string) string {
+func jsonhttp(data interface{}, errs []string) string {
+	errors := []map[string]string{}
+
 	if data == nil {
 		data = map[string]string{}
 	}
-	if errors == nil {
-		errors = map[string]string{}
+	if len(errs) != 0 {
+		for _, err := range errs {
+			errors = append(errors, map[string]string{"description": err})
+		}
 	}
 
 	res := &jsonres{
@@ -59,54 +63,10 @@ func jsonhttp(data map[string]string, errors map[string]string) string {
 	return string(r)
 }
 
-func (s *server) RegisterTokens(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	code := req.QueryStringParameters["code"]
-
-	res, err := oauth.AccessToken(&oauth.AccessTokenRequest{
-		Code:        code,
-		AccessType:  "offline",
-		ClientID:    *clientID,
-		RedirectURI: *redirectURI,
-	})
-	if err != nil {
-		s.log.Error().Str("error", err.Error()).Msg("err in access token")
-		return events.APIGatewayProxyResponse{
-			StatusCode: 500,
-			Body:       err.Error(),
-			Headers:    map[string]string{"Content-Type": "application/json"},
-		}, nil
-	}
-
-	err = s.cache.BatchPut(
-		[]*cache.PutParamInput{&cache.PutParamInput{
-			Description: "Access Token for the Aurifodina",
-			Name:        "accesstoken",
-			Value:       res.AccessToken,
-		}, &cache.PutParamInput{
-			Description: "Refresh Token for the Aurifodina",
-			Name:        "refreshtoken",
-			Value:       res.RefreshToken,
-		}})
-
-	if err != nil {
-		s.log.Error().
-			Str("error", err.Error()).
-			Msg("Error saving params, continuing")
-	}
-
-	b, err := json.Marshal(res)
-	if err != nil {
-		s.log.Error().Msg("Err in marshallng res")
-		return events.APIGatewayProxyResponse{
-			StatusCode: 500,
-			Body:       err.Error(),
-			Headers:    map[string]string{"Content-Type": "application/json"},
-		}, nil
-	}
-
+func httpres(code int, body string) (events.APIGatewayProxyResponse, error) {
 	return events.APIGatewayProxyResponse{
-		StatusCode: 200,
-		Body:       string(b),
+		StatusCode: code,
+		Body:       body,
 		Headers:    map[string]string{"Content-Type": "application/json"},
 	}, nil
 }
@@ -114,26 +74,48 @@ func (s *server) RegisterTokens(ctx context.Context, req events.APIGatewayProxyR
 func (s *server) router(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	switch req.Path {
 	case "/":
-		return s.RegisterTokens(ctx, req)
+		code := req.QueryStringParameters["code"]
+		errs := []string{}
+
+		res, err := oauth.AccessToken(&oauth.AccessTokenRequest{
+			Code:        code,
+			AccessType:  "offline",
+			ClientID:    *clientID,
+			RedirectURI: *redirectURI,
+		})
+		if err != nil {
+			errs = append(errs, err.Error())
+			s.log.Error().Str("error", err.Error()).Msg("err in access token")
+			return httpres(http.StatusInternalServerError, jsonhttp(nil, errs))
+		}
+
+		err = s.cache.BatchPut(
+			[]*cache.PutParamInput{&cache.PutParamInput{
+				Description: "TD Ameritrade Access Token",
+				Name:        "accesstoken",
+				Value:       res.AccessToken,
+			}, &cache.PutParamInput{
+				Description: "TD Ameritrade Refresh Token",
+				Name:        "refreshtoken",
+				Value:       res.RefreshToken,
+			}})
+
+		if err != nil {
+			s.log.Error().
+				Str("error", err.Error()).
+				Msg("Error saving params, continuing")
+			errs = append(errs, err.Error())
+		}
+
+		return httpres(http.StatusOK, jsonhttp(res, errs))
 	case "/cache":
 		p, err := s.cache.Get([]*string{aws.String("accesstoken"), aws.String("refreshtoken")}, true)
 		if err != nil {
-			return events.APIGatewayProxyResponse{
-				StatusCode: http.StatusInternalServerError,
-				Body:       jsonhttp(nil, map[string]string{"description": err.Error()}),
-				Headers:    map[string]string{"Content-Type": "application/json"},
-			}, nil
+			return httpres(http.StatusInternalServerError, jsonhttp(nil, []string{err.Error()}))
 		}
-		return events.APIGatewayProxyResponse{
-			StatusCode: http.StatusOK,
-			Body:       jsonhttp(p, nil),
-			Headers:    map[string]string{"Content-Type": "application/json"},
-		}, nil
+		return httpres(http.StatusOK, jsonhttp(p, nil))
 	}
-	return events.APIGatewayProxyResponse{
-		StatusCode: http.StatusNotImplemented,
-		Headers:    map[string]string{"Content-Type": "application/json"},
-	}, nil
+	return httpres(http.StatusNotFound, jsonhttp(nil, []string{"Route not found"}))
 }
 
 func main() {
@@ -147,6 +129,7 @@ func main() {
 	}
 	log.Debug().Msg("starting handler")
 	log := zerolog.New(os.Stdout)
+
 	sess, err := session.NewSession(&aws.Config{
 		Region: aws.String("us-west-2"),
 	})
