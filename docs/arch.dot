@@ -1,0 +1,14 @@
+digraph {
+    
+    tdamer [label="TD Ameritrade\nhttps://auth.tdameritrade.com/"]
+    oauth [shape="box3d" label="OAuth \nλ"]
+    login [label="Browser OAuth Login\nauth?response_type=code&redirect_uri={{app_redirect_uri}}&client_id={{client_id@AMER.OAUTHAP}}"]
+    keystore [shape="cylinder" label="Key Cache\n(SSM)"]
+    consumers [shape="box3d" label="Application"]
+
+    login -> tdamer [label=" (1) Submit form "]
+    tdamer -> oauth [label=" (2) GET redirect_uri/?code={{authorization_code}} "]
+    oauth -> tdamer [label=" (3) POST /v1/oauth\nURL encoded data *must* be in same order as docs\nResponse contains keys"]
+    consumers -> oauth [dir="" label=" (4) GET redirect_uri/cache "]
+    oauth -> keystore [dir="both" label="(3.1) Store keys\n(4.1) Get keys"]
+}

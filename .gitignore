@@ -1,0 +1,4 @@
+pkg/user/testdata/principalsGolden.json
+bin/*
+dist/*
+deploy/cfn/*-prod.yml
