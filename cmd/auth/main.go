@@ -19,7 +19,6 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -127,7 +126,6 @@ func main() {
 	if *debug {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
-	log.Debug().Msg("starting handler")
 	log := zerolog.New(os.Stdout)
 
 	sess, err := session.NewSession(&aws.Config{
@@ -146,5 +144,7 @@ func main() {
 			Client: sc,
 		},
 	}
+
+	log.Debug().Msg("starting handler")
 	lambda.Start(srv.router)
 }
