@@ -2,6 +2,7 @@ package user
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 )
@@ -100,25 +101,24 @@ type Principals struct {
 func GetPrincipals(bearerToken string) (*Principals, error) {
 	client := &http.Client{}
 
-	req, err := http.NewRequest("GET", "https://api.tdameritrade.com/v1/userprincipals?fields=streamerSubscriptionKeys%2CstreamerConnectionInfo%2Cpreferences%2CsurrogateIds", nil)
-	if err != nil {
-		panic(err)
-	}
-
+	req, _ := http.NewRequest("GET", "https://api.tdameritrade.com/v1/userprincipals?fields=streamerSubscriptionKeys%2CstreamerConnectionInfo%2Cpreferences%2CsurrogateIds", nil)
 	req.Header.Add("Authorization", "Bearer "+bearerToken)
 	res, err := client.Do(req)
-	p := &Principals{}
+	if err != nil {
+		return &Principals{}, fmt.Errorf("Failed to GET principals from TD Server: %s", err.Error())
+	}
+
 	defer res.Body.Close()
 
 	if res.StatusCode > 300 {
-		panic(res.StatusCode)
+		return &Principals{}, fmt.Errorf("Failed to get principals, status code: %d", res.StatusCode)
 	}
 
+	p := &Principals{}
 	bodyBytes, err := ioutil.ReadAll(res.Body)
-
 	err = json.Unmarshal(bodyBytes, p)
 	if err != nil {
-		panic(err)
+		return &Principals{}, fmt.Errorf("Failed to unmarshal principals: %s", err.Error())
 	}
 
 	return p, nil
