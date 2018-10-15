@@ -10,6 +10,51 @@ import (
 	"github.com/rk23/tdgo/pkg/user"
 )
 
+// Service constants. Modeled after http package status and method codes.
+const (
+	ServiceAcctActivity           = "ACCT_ACTIVITY"
+	ServiceAdmin                  = "ADMIN"
+	ServiceActivesNasdaq          = "ACTIVES_NASDAQ"
+	ServiceActivesNyse            = "ACTIVES_NYSE"
+	ServiceActivesOtcbb           = "ACTIVES_OTCBB"
+	ServiceActivesOptions         = "ACTIVES_OPTIONS"
+	ServiceForexBook              = "FOREX_BOOK"
+	ServiceFuturesBook            = "FUTURES_BOOK"
+	ServiceListedBook             = "LISTED_BOOK"
+	ServiceNasdaqBook             = "NASDAQ_BOOK"
+	ServiceOptionsBook            = "OPTIONS_BOOK"
+	ServiceFuturesOptionsBook     = "FUTURES_OPTIONS_BOOK"
+	ServiceChartEquity            = "CHART_EQUITY"
+	ServiceChartFutures           = "CHART_ FUTURES"
+	ServiceChartHistoryFutures    = "CHART_HISTORY_FUTURES"
+	ServiceQuote                  = "QUOTE"
+	ServiceLeveloneFutures        = "LEVELONE_FUTURES"
+	ServiceLeveloneForex          = "LEVELONE_FOREX"
+	ServiceLeveloneFuturesOptions = "LEVELONE_FUTURES_OPTIONS"
+	ServiceOption                 = "OPTION"
+	ServiceLeveltwoFutures        = "LEVELTWO_FUTURES"
+	ServiceNewsHeadline           = "NEWS_HEADLINE"
+	ServiceNewsStory              = "NEWS_STORY"
+	ServiceNewsHeadlineList       = "NEWS_HEADLINE_LIST"
+	ServiceStreamerServer         = "STREAMER_SERVER"
+	ServiceTimesaleEquity         = "TIMESALE_EQUITY"
+	ServiceTimesaleFutures        = "TIMESALE_FUTURES"
+	ServiceTimesaleForex          = "TIMESALE_FOREX"
+	ServiceTimesaleOptions        = "TIMESALE_OPTIONS"
+)
+
+// Command constants. Modeled after http package status and method codes.
+const (
+	CmdLogin       = "LOGIN"
+	CmdStream      = "STREAM"
+	CmdQos         = "QOS"
+	CmdSubscribe   = "SUBS"
+	CmdUnsubscribe = "UNSUBS"
+	CmdAdd         = "ADD"
+	CmdView        = "VIEW"
+	CmdLogout      = "LOGOUT"
+)
+
 type lc struct {
 	Code    int    `json:"code"`
 	Message string `json:"msg"`
@@ -91,8 +136,8 @@ func LoginRequest(user *user.Principals) ([]byte, error) {
 
 	r := &requests{[]Request{
 		Request{
-			Service:   "ADMIN",
-			Command:   "LOGIN",
+			Service:   ServiceAdmin,
+			Command:   CmdLogin,
 			RequestID: 0,
 			Account:   user.Accounts[0].AccountID,
 			Source:    user.StreamerInfo.AppID,
@@ -112,8 +157,8 @@ func LoginRequest(user *user.Principals) ([]byte, error) {
 func LogoutRequest(user *user.Principals) ([]byte, error) {
 	r := &requests{[]Request{
 		Request{
-			Service:    "ADMIN",
-			Command:    "LOGOUT",
+			Service:    ServiceAdmin,
+			Command:    CmdLogout,
 			RequestID:  1,
 			Account:    user.Accounts[0].AccountID,
 			Source:     user.StreamerInfo.AppID,
