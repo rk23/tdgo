@@ -1,6 +1,6 @@
 # TDGO
 
-Go library for interacting with the TD Ameritrade API. Includes service to handle negotiating OAuth tokens.  
+Go SDK for interacting with the TD Ameritrade API. Includes service to handle negotiating OAuth tokens.  
 
 Under heavy development as a personal project but free to use if you find it helpful. 
 
@@ -15,7 +15,7 @@ Under heavy development as a personal project but free to use if you find it hel
 Check out the tasks folder to see how to build and deploy the lambda OAuth handler. The basic commands are:
 
 - `inv build  # Builds the main binary and stores it in a consistent location`
-- `inv package  # Upload code to S3 bucket, generate cloudformation`
+- `inv package  --s3-bucket BUCKET_NAME # Upload code to S3 bucket, generate cloudformation`
 - `inv deploy # Update live stack`
 - `inv ship --s3-bucket BUCKET_NAME # All the above`
 
