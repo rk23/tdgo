@@ -25,7 +25,7 @@ const (
 	ServiceOptionsBook            = "OPTIONS_BOOK"
 	ServiceFuturesOptionsBook     = "FUTURES_OPTIONS_BOOK"
 	ServiceChartEquity            = "CHART_EQUITY"
-	ServiceChartFutures           = "CHART_ FUTURES"
+	ServiceChartFutures           = "CHART_FUTURES"
 	ServiceChartHistoryFutures    = "CHART_HISTORY_FUTURES"
 	ServiceQuote                  = "QUOTE"
 	ServiceLeveloneFutures        = "LEVELONE_FUTURES"
