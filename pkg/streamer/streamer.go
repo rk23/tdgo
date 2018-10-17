@@ -2,7 +2,6 @@ package streamer
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/url"
 	"strconv"
 	"time"
@@ -54,6 +53,33 @@ const (
 	CmdView        = "VIEW"
 	CmdLogout      = "LOGOUT"
 )
+
+type Client struct {
+	service string
+	user    user.Principals
+	command string
+}
+
+func (c *Client) Cmd(cmd string) *Client {
+	c.command = cmd
+	return c
+}
+
+func (c *Client) Request(p Params) []byte {
+	b, _ := json.Marshal(&Request{
+		Service:    c.service,
+		Command:    c.command,
+		Account:    c.user.Accounts[0].AccountID,
+		Source:     c.user.StreamerInfo.AppID,
+		Parameters: p,
+	})
+	return b
+}
+
+type ClientConfig struct {
+	Service string
+	User    user.Principals
+}
 
 type lc struct {
 	Code    int    `json:"code"`
@@ -110,28 +136,24 @@ func encode(m map[string]string) string {
 }
 
 // LoginRequest returns a login request
-func LoginRequest(user *user.Principals) ([]byte, error) {
+func (c *Client) Login() []byte {
 
 	// ISO-8601 != RFC3339
-	t, err := time.Parse("2006-01-02T15:04:05+0000", user.StreamerInfo.TokenTimestamp)
-	if err != nil {
-		fmt.Println("err: " + err.Error())
-		return nil, err
-	}
+	t, _ := time.Parse("2006-01-02T15:04:05+0000", c.user.StreamerInfo.TokenTimestamp)
 	ms := strconv.FormatInt(t.Unix()*1000, 10)
 
 	credentials := map[string]string{
-		"userid":      user.Accounts[0].AccountID,
-		"token":       user.StreamerInfo.Token,
-		"company":     user.Accounts[0].Company,
-		"segment":     user.Accounts[0].Segment,
-		"cddomain":    user.Accounts[0].AccountCdDomainID,
-		"usergroup":   user.StreamerInfo.UserGroup,
-		"accesslevel": user.StreamerInfo.AccessLevel,
+		"userid":      c.user.Accounts[0].AccountID,
+		"token":       c.user.StreamerInfo.Token,
+		"company":     c.user.Accounts[0].Company,
+		"segment":     c.user.Accounts[0].Segment,
+		"cddomain":    c.user.Accounts[0].AccountCdDomainID,
+		"usergroup":   c.user.StreamerInfo.UserGroup,
+		"accesslevel": c.user.StreamerInfo.AccessLevel,
 		"authorized":  "Y",
 		"timestamp":   ms,
-		"appid":       user.StreamerInfo.AppID,
-		"acl":         user.StreamerInfo.ACL,
+		"appid":       c.user.StreamerInfo.AppID,
+		"acl":         c.user.StreamerInfo.ACL,
 	}
 
 	r := &requests{[]Request{
@@ -139,33 +161,41 @@ func LoginRequest(user *user.Principals) ([]byte, error) {
 			Service:   ServiceAdmin,
 			Command:   CmdLogin,
 			RequestID: 0,
-			Account:   user.Accounts[0].AccountID,
-			Source:    user.StreamerInfo.AppID,
+			Account:   c.user.Accounts[0].AccountID,
+			Source:    c.user.StreamerInfo.AppID,
 			Parameters: Params{
 				Credential: encode(credentials),
-				Token:      user.StreamerInfo.Token,
+				Token:      c.user.StreamerInfo.Token,
 				Version:    "1.0",
 			},
 		}}}
 
-	req, err := json.Marshal(r)
+	req, _ := json.Marshal(r)
 
-	return req, err
+	return req
 }
 
 // LogoutRequest does a thing
-func LogoutRequest(user *user.Principals) ([]byte, error) {
+func (c *Client) Logout() []byte {
 	r := &requests{[]Request{
 		Request{
 			Service:    ServiceAdmin,
 			Command:    CmdLogout,
 			RequestID:  1,
-			Account:    user.Accounts[0].AccountID,
-			Source:     user.StreamerInfo.AppID,
+			Account:    c.user.Accounts[0].AccountID,
+			Source:     c.user.StreamerInfo.AppID,
 			Parameters: Params{},
 		}}}
 
-	req, err := json.Marshal(r)
+	req, _ := json.Marshal(r)
 
-	return req, err
+	return req
+}
+
+// New streamer client, prevent repetitive creation of requests
+func New(cfg *ClientConfig) *Client {
+	return &Client{
+		service: cfg.Service,
+		user:    cfg.User,
+	}
 }
