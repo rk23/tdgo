@@ -103,7 +103,7 @@ type Params struct {
 	Credential string `json:"credential,omitempty"`
 	Token      string `json:"token,omitempty"`
 	Version    string `json:"version,omitempty"`
-	QOSLevel   string `json:"qoslevel,omitempty"`
+	QOSLevel   int    `json:"qoslevel,omitempty"`
 	Keys       string `json:"keys,omitempty"`
 	Fields     string `json:"fields,omitempty"`
 	Symbol     string `json:"symbol,omitempty"`
@@ -167,6 +167,7 @@ func (c *Client) Login() []byte {
 				Credential: encode(credentials),
 				Token:      c.user.StreamerInfo.Token,
 				Version:    "1.0",
+				QOSLevel:   0,
 			},
 		}}}
 
