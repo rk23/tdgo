@@ -135,7 +135,7 @@ func encode(m map[string]string) string {
 	return q
 }
 
-// LoginRequest returns a login request
+// Login returns a login request
 func (c *Client) Login() []byte {
 
 	// ISO-8601 != RFC3339
@@ -176,7 +176,7 @@ func (c *Client) Login() []byte {
 	return req
 }
 
-// LogoutRequest does a thing
+// Logout logs the streamer out of the websocket connection
 func (c *Client) Logout() []byte {
 	r := &requests{[]Request{
 		Request{
