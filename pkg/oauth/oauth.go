@@ -55,6 +55,13 @@ type AccessTokenResponse struct {
 	RefreshTokenExpiry int64  `json:"refresh_token_expires_in"`
 }
 
+// RefreshTokenResponse specifies the refresh response
+type RefreshTokenResponse struct {
+	AccessToken string `json:"access_token"`
+	ExpiresIn   int    `json:"expires_in"`
+	TokenType   string `json:"token_type"`
+}
+
 // AccessToken function POSTs to the TD Ameritrade server to get the new tokens
 func AccessToken(req *AccessTokenRequest) (*AccessTokenResponse, error) {
 	atr := &AccessTokenResponse{}
@@ -92,17 +99,13 @@ func AccessToken(req *AccessTokenRequest) (*AccessTokenResponse, error) {
 
 // RefreshToken function refreshes access token timeout
 // TODO: No longer apart of the struct - need to pass in res values as well
-func RefreshToken(req *AccessTokenRequest) (*AccessTokenResponse, error) {
-	res := &AccessTokenResponse{}
+func RefreshToken(accessToken, refreshToken, clientID string) (*RefreshTokenResponse, error) {
 
 	// Must be ordered as specified in the docs! Go's url.Values will
 	// sort them into alphabetical order.
-	ordered := fmt.Sprintf("grant_type=refresh_token&refresh_token=%s&access_type=%s&code=%s&client_id=%s&redirect_uri=%s",
-		url.QueryEscape(req.AccessType),
-		url.QueryEscape(res.RefreshToken),
-		url.QueryEscape(res.AccessToken),
-		url.QueryEscape(req.ClientID),
-		url.QueryEscape(req.RedirectURI))
+	ordered := fmt.Sprintf("grant_type=refresh_token&refresh_token=%s&client_id=%s",
+		url.QueryEscape(refreshToken),
+		url.QueryEscape(clientID))
 
 	client := &http.Client{}
 	nr, _ := http.NewRequest("POST", "https://api.tdameritrade.com/v1/oauth2/token", strings.NewReader(ordered))
@@ -116,9 +119,8 @@ func RefreshToken(req *AccessTokenRequest) (*AccessTokenResponse, error) {
 	defer r.Body.Close()
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 
-	fmt.Printf("%+v", string(bodyBytes))
-
-	err = json.Unmarshal(bodyBytes, res)
+	var res *RefreshTokenResponse
+	err = json.Unmarshal(bodyBytes, &res)
 	if err != nil {
 		panic(err)
 	}
