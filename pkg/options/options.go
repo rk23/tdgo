@@ -50,7 +50,7 @@ type Response struct {
 	CallExpDateMap   map[string]map[string][]StrikeQuote
 	DaysToExpiration float32
 	InterestRate     float32
-	Interval         int64
+	Interval         float32
 	IsDelayed        bool
 	IsIndex          bool
 	PutExpDateMap    map[string]map[string][]StrikeQuote
