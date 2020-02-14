@@ -74,8 +74,6 @@ func AccessToken(req *AccessTokenRequest) (*AccessTokenResponse, error) {
 	r, _ := http.NewRequest("POST", "https://api.tdameritrade.com/v1/oauth2/token", strings.NewReader(ordered))
 	r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	fmt.Printf("%+v", r)
-
 	res, err := client.Do(r)
 	if err != nil {
 		return nil, err
