@@ -1,4 +1,4 @@
-package orders
+package account
 
 import (
 	"encoding/json"
@@ -44,7 +44,7 @@ type ExecutionLeg struct {
 }
 
 type Execution struct {
-	ActivityType           string         `json:"activityType`
+	ActivityType           string         `json:"activityType"`
 	ExecutionType          string         `json:"executionType"`
 	Quantity               float32        `json:"quantity"`
 	OrderRemainingQuantity float32        `json:"orderRemainingQuantity"`
@@ -253,12 +253,16 @@ func PlaceOrder(r PlaceOrderRequest) (*Order, error) {
 	}
 	defer res.Body.Close()
 
+	bodyBytes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+
 	if res.StatusCode > 300 {
-		return nil, fmt.Errorf("Failed to get orders for account: " + r.AccountID)
+		return nil, fmt.Errorf("Failed to place order(s) for account: " + r.AccountID + ", reason: " + string(bodyBytes))
 	}
 
 	o := &Order{}
-	bodyBytes, err := ioutil.ReadAll(res.Body)
 	err = json.Unmarshal(bodyBytes, o)
 	if err != nil {
 		return nil, err
