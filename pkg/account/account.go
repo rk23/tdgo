@@ -1,6 +1,7 @@
 package account
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -60,9 +61,9 @@ type OptionDeliverable struct {
 
 type Instrument struct {
 	AssetType   string `json:"assetType"`
-	CUSIP       string `json:"cusip"`
+	CUSIP       string `json:"cusip,omitempty"`
 	Symbol      string `json:"symbol"`
-	Description string `json:"description"`
+	Description string `json:"description,omitempty"`
 }
 
 type Option struct {
@@ -96,57 +97,57 @@ type FixedIncome struct {
 }
 
 type OrderCancelTime struct {
-	Date        string `json:"date"`
-	ShortFormat bool   `json:"shortFormat"`
+	Date        string `json:"date,omitempty"`
+	ShortFormat bool   `json:"shortFormat,omitempty"`
 }
 
 type OrderLeg struct {
-	OrderLegType   string     `json:"orderLegType"`
-	LegID          int        `json:"legId"`
+	OrderLegType   string     `json:"orderLegType,omitempty"`
+	LegID          int        `json:"legId,omitempty"`
 	Instrument     Instrument `json:"instrument"`
 	Instruction    string     `json:"instruction"`
-	PositionEffect string     `json:"positionEffect"`
+	PositionEffect string     `json:"positionEffect,omitempty"`
 	Quantity       float32    `json:"quantity"`
-	QuantityType   string     `json:"quantityType"`
+	QuantityType   string     `json:"quantityType,omitempty"`
 }
 
 type Order struct {
-	Session                  string          `json:"session"`
-	Duration                 string          `json:"duration"`
-	OrderType                string          `json:"orderType"`
-	CancelTime               OrderCancelTime `json:"cancelTime"`
-	ComplexOrderStrategyType string          `json:"complexOrderStrategyType"`
-	Quantity                 float32         `json:"quantity"`
-	FilledQuantity           float32         `json:"filledQuantity"`
-	RemainingQuantity        float32         `json:"remainingQuantity"`
-	RequestedDestination     string          `json:"requestedDestination"`
-	DestinationLinkName      string          `json:"destinationLinkName"`
-	ReleaseTime              string          `json:"releaseTime"`
-	StopPrice                float32         `json:"stopPrice"`
-	StopPriceLinkBasis       string          `json:"stopPriceLinkBasis"`
-	StopPriceLinkType        string          `json:"stopPriceLinkType"`
-	StopPriceOffset          float32         `json:"stopPriceOffset"`
-	StopType                 string          `json:"stopType"`
-	PriceLinkBasis           string          `json:"priceLinkBasis"`
-	PriceLinkType            string          `json:"priceLinkType"`
-	Price                    float32         `json:"price"`
-	TaxLotMethod             string          `json:"taxLotMethod"`
-	OrderLegCollection       []OrderLeg      `json:"orderLegCollection"`
-	ActivationPrice          float32         `json:"activationPrice"`
-	SpecialInstructions      string          `json:"specialInstruction"`
-	OrderStrategyType        string          `json:"orderStrategyType"`
-	OrderID                  int             `json:"orderId"`
-	Cancelable               bool            `json:"cancelable"`
-	Editable                 bool            `json:"editable"`
-	Status                   string          `json:"status"`
-	EnteredTime              string          `json:"enteredTime"`
-	CloseTime                string          `json:"closeTime"`
-	Tag                      string          `json:"tag"`
-	AccountID                int             `json:"accountId"`
-	OrderActivityCollection  []Execution     `json:"orderActivityCollection"`
-	ReplacingOrderCollection []Execution     `json:"replacingOrderCollection"`
-	ChildOrderStrategies     []Execution     `json:"childOrderStrategies"`
-	StatusDescription        string          `json:"statusDescription"`
+	Session                  string           `json:"session"`
+	Duration                 string           `json:"duration"`
+	OrderType                string           `json:"orderType"`
+	CancelTime               *OrderCancelTime `json:"cancelTime,omitempty"`
+	ComplexOrderStrategyType string           `json:"complexOrderStrategyType"`
+	Quantity                 float32          `json:"quantity,omitempty"`
+	FilledQuantity           float32          `json:"filledQuantity,omitempty"`
+	RemainingQuantity        float32          `json:"remainingQuantity,omitempty"`
+	RequestedDestination     string           `json:"requestedDestination,omitempty"`
+	DestinationLinkName      string           `json:"destinationLinkName,omitempty"`
+	ReleaseTime              string           `json:"releaseTime,omitempty"`
+	StopPrice                float32          `json:"stopPrice,omitempty"`
+	StopPriceLinkBasis       string           `json:"stopPriceLinkBasis,omitempty"`
+	StopPriceLinkType        string           `json:"stopPriceLinkType,omitempty"`
+	StopPriceOffset          float32          `json:"stopPriceOffset,omitempty"`
+	StopType                 string           `json:"stopType,omitempty"`
+	PriceLinkBasis           string           `json:"priceLinkBasis,omitempty"`
+	PriceLinkType            string           `json:"priceLinkType,omitempty"`
+	Price                    float32          `json:"price,omitempty"`
+	TaxLotMethod             string           `json:"taxLotMethod,omitempty"`
+	OrderLegCollection       []OrderLeg       `json:"orderLegCollection"`
+	ActivationPrice          float32          `json:"activationPrice,omitempty"`
+	SpecialInstructions      string           `json:"specialInstruction,omitempty"`
+	OrderStrategyType        string           `json:"orderStrategyType"`
+	OrderID                  int              `json:"orderId,omitempty"`
+	Cancelable               bool             `json:"cancelable,omitempty"`
+	Editable                 bool             `json:"editable,omitempty"`
+	Status                   string           `json:"status,omitempty"`
+	EnteredTime              string           `json:"enteredTime,omitempty"`
+	CloseTime                string           `json:"closeTime,omitempty"`
+	Tag                      string           `json:"tag,omitempty"`
+	AccountID                int              `json:"accountId,omitempty"`
+	OrderActivityCollection  []Execution      `json:"orderActivityCollection,omitempty"`
+	ReplacingOrderCollection []Execution      `json:"replacingOrderCollection,omitempty"`
+	ChildOrderStrategies     []Execution      `json:"childOrderStrategies,omitempty"`
+	StatusDescription        string           `json:"statusDescription,omitempty"`
 }
 
 type GetOrderRequest struct {
@@ -175,7 +176,7 @@ func GetOrder(r GetOrderRequest) (*Order, error) {
 	defer res.Body.Close()
 
 	if res.StatusCode > 300 {
-		return nil, fmt.Errorf("Failed to get orders for account: " + r.AccountID)
+		return nil, fmt.Errorf("Failed to get orders for account: %s, status code: %d", r.AccountID, res.StatusCode)
 	}
 
 	o := &Order{}
@@ -199,10 +200,10 @@ func GetOrders(r GetOrdersRequest) (*[]Order, error) {
 		ordered += fmt.Sprintf("maxResults=%d", *r.MaxResults)
 	}
 	if r.FromEnteredTime != nil {
-		ordered += "fromEnteredTime" + *r.FromEnteredTime
+		ordered += "fromEnteredTime=" + *r.FromEnteredTime + "&"
 	}
 	if r.ToEnteredTime != nil {
-		ordered += "toEnteredTime" + *r.ToEnteredTime
+		ordered += "toEnteredTime=" + *r.ToEnteredTime
 	}
 	if r.Status != nil {
 		ordered += "status=" + *r.Status
@@ -223,11 +224,12 @@ func GetOrders(r GetOrdersRequest) (*[]Order, error) {
 	defer res.Body.Close()
 
 	if res.StatusCode > 300 {
-		return nil, fmt.Errorf("Failed to get orders for account: " + r.AccountID)
+		return nil, fmt.Errorf("Failed to get orders for account: %s, status code: %d", r.AccountID, res.StatusCode)
 	}
 
 	o := &[]Order{}
 	bodyBytes, err := ioutil.ReadAll(res.Body)
+	fmt.Println(string(bodyBytes))
 	err = json.Unmarshal(bodyBytes, o)
 	if err != nil {
 		return nil, err
@@ -242,31 +244,30 @@ type PlaceOrderRequest struct {
 	AccountID   string
 }
 
-func PlaceOrder(r PlaceOrderRequest) (*Order, error) {
+func PlaceOrder(r PlaceOrderRequest) error {
 	client := &http.Client{}
 
-	req, _ := http.NewRequest("POST", "https://api.tdameritrade.com/v1/accounts/"+r.AccountID+"/orders", nil)
+	body, err := json.Marshal(r.Order)
+	if err != nil {
+		panic(err)
+	}
+	req, _ := http.NewRequest("POST", "https://api.tdameritrade.com/v1/accounts/"+r.AccountID+"/orders", bytes.NewBuffer(body))
 	req.Header.Add("Authorization", "Bearer "+r.BearerToken)
+	req.Header.Add("Content-Type", "application/json")
 	res, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer res.Body.Close()
 
 	bodyBytes, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	if res.StatusCode > 300 {
-		return nil, fmt.Errorf("Failed to place order(s) for account: " + r.AccountID + ", reason: " + string(bodyBytes))
+	if res.StatusCode != 201 {
+		return fmt.Errorf("Failed to place order(s) for account: " + r.AccountID + ", reason: " + string(bodyBytes) + ", status: " + res.Status)
 	}
 
-	o := &Order{}
-	err = json.Unmarshal(bodyBytes, o)
-	if err != nil {
-		return nil, err
-	}
-
-	return o, nil
+	return nil
 }
