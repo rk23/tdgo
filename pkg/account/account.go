@@ -189,6 +189,8 @@ func GetOrder(r GetOrderRequest) (*Order, error) {
 	return o, nil
 }
 
+// GetOrders returns orders from the specified account on the same given day.
+// Date format is yyyy-MM-dd
 func GetOrders(r GetOrdersRequest) (*[]Order, error) {
 	client := &http.Client{}
 	var url string
