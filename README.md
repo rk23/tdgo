@@ -1,16 +1,20 @@
-# TDGO
+# tdgo
 
-Go SDK for interacting with the TD Ameritrade API. Includes service to handle negotiating OAuth tokens.  
+Go SDK for interacting with the TD Ameritrade API.
 
 Under heavy development as a personal project but free to use if you find it helpful. 
 
-## Prerequisites
+## OAuth Handler
+
+AWS Lambda function that accepts TD Ameritrade's POST request supplying tokens and securely caches them in SSM.  
+
+### Prerequisites
 
 - `~/.aws/config` && `~/.aws/credentials` populated with your info
 - S3 Bucket for storing lambda code
 - SecureString SSM params with name `accesstoken` and `refreshtoken`. 
 
-## How To
+### Deployment
 
 Check out the tasks folder to see how to build and deploy the lambda OAuth handler. The basic commands are:
 
